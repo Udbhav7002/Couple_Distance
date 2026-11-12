@@ -63,10 +63,14 @@
             android:id="@+id/footer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="9dp"
+            android:layout_marginTop="8dp"
             android:gravity="center"
             android:singleLine="true"
-            android:textSize="10sp"
-            android:textColor="#99FFFFFF" />
+            android:textSize="11sp"
+            android:textColor="#F2FFFFFF"
+            android:shadowColor="#80000000"
+            android:shadowDx="0"
+            android:shadowDy="1"
+            android:shadowRadius="3" />
     </LinearLayout>
 </FrameLayout>

@@ -48,6 +48,19 @@ class MockBackend(context: Context? = null) : Backend {
             code = generateCode(),
             radiusM = 200,
             me = MemberProfile(uid = "mock-me", name = me.name, colorIndex = me.colorIndex),
+            partner = null,
+        )
+        set(state)
+        return state
+    }
+
+    override suspend fun joinCouple(code: String, me: MemberInit): CoupleState {
+        // Mock partner joins with you
+        val state = CoupleState(
+            coupleId = "mock-couple",
+            code = code.trim().uppercase(),
+            radiusM = 200,
+            me = MemberProfile(uid = "mock-me", name = me.name, colorIndex = me.colorIndex),
             partner = simulatedPartner(),
         )
         set(state)
@@ -55,9 +68,12 @@ class MockBackend(context: Context? = null) : Backend {
         return state
     }
 
-    override suspend fun joinCouple(code: String, me: MemberInit): CoupleState {
-        // Mock has a single device: behave like create so the flow is testable.
-        return createCouple(me)
+    /** Manually connects the simulated partner from the waiting screen (for demo mode) */
+    fun attachDemoPartner() {
+        val c = couple.value ?: return
+        val partner = simulatedPartner()
+        set(c.copy(partner = partner))
+        startDrift()
     }
 
     override fun observeCouple(coupleId: String, myUid: String): Flow<CoupleState?> = couple

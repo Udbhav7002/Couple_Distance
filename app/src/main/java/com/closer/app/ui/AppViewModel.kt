@@ -159,6 +159,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         c.settings.setOnboarded(false)
     }
 
+    /** In demo mode, connects the simulated partner from the waiting screen */
+    fun connectDemoPartner() = viewModelScope.launch {
+        c.mock?.attachDemoPartner()
+    }
+
     // ---- debug controls (mock backend only) --------------------------------
 
     fun debugPlacePartner(distanceM: Double) = viewModelScope.launch {

@@ -1,7 +1,11 @@
 <resources>
-    <color name="window_bg">#FF101317</color>
-    <color name="widget_scrim">#B30F1216</color>
-    <color name="widget_scrim_light">#B3EDF0F4</color>
-    <color name="bridge_white">#8CFFFFFF</color>
+    <color name="window_bg">#FF0B0D12</color>
+    <!-- Translucent frosted glass for widget (Image reference style) -->
+    <color name="widget_glass_base">#38161A22</color>
+    <color name="widget_glass_stroke">#59FFFFFF</color>
+    <color name="widget_glass_highlight">#38FFFFFF</color>
+    <color name="widget_scrim">#38161A22</color>
+    <color name="widget_scrim_light">#59F0F4F8</color>
+    <color name="bridge_white">#99FFFFFF</color>
     <color name="text_on_widget">#FFFFFFFF</color>
 </resources>

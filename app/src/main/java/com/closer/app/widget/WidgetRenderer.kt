@@ -52,11 +52,11 @@ object WidgetRenderer {
 
         rv.setTextViewText(R.id.footer, footerText(s, dimAll))
         if (s.paused) {
-            rv.setTextColor(R.id.footer, 0x99FFFFFF.toInt())
+            rv.setTextColor(R.id.footer, 0xB3FFFFFF.toInt())
         } else if (near) {
             rv.setTextColor(R.id.footer, 0xFFFFB3C6.toInt())
         } else {
-            rv.setTextColor(R.id.footer, 0x99FFFFFF.toInt())
+            rv.setTextColor(R.id.footer, 0xE6FFFFFF.toInt())
         }
 
         rv.setOnClickPendingIntent(
