@@ -4,7 +4,7 @@
 
 **How far apart are the two of you, right now?**
 
-[**📥 Download Latest APK (v1.0.0)**](https://github.com/Udbhav7002/Couple_Distance/releases/latest/download/Closer-v1.0.0.apk)
+[**📥 Download Latest APK (v1.1.0)**](https://github.com/Udbhav7002/Couple_Distance/releases/latest/download/Closer-v1.1.0.apk)
 
 A couple's proximity app for Android. Two gradient lenses on your home screen — your initials and
 your partner's — joined by a bridge line with the live distance sitting on it like a bead, shaped
