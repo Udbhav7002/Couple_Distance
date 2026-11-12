@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg_compact">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp">
+
+        <ImageView
+            android:id="@+id/lens_me"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:scaleType="fitCenter"
+            android:contentDescription="@string/app_name" />
+
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/bridge_line"
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:layout_gravity="center_vertical"
+                android:background="@color/bridge_white"
+                android:importantForAccessibility="no"
+                android:contentDescription="@null" />
+
+            <ImageView
+                android:id="@+id/bead"
+                android:layout_width="wrap_content"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:scaleType="fitCenter"
+                android:contentDescription="@string/app_name" />
+        </FrameLayout>
+
+        <ImageView
+            android:id="@+id/lens_partner"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:scaleType="fitCenter"
+            android:contentDescription="@string/app_name" />
+    </LinearLayout>
+</FrameLayout>

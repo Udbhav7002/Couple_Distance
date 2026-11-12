@@ -1,0 +1,7 @@
+<resources>
+    <color name="window_bg">#FF101317</color>
+    <color name="widget_scrim">#B30F1216</color>
+    <color name="widget_scrim_light">#B3EDF0F4</color>
+    <color name="bridge_white">#8CFFFFFF</color>
+    <color name="text_on_widget">#FFFFFFFF</color>
+</resources>

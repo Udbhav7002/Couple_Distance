@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Closer</string>
+    <string name="widget_description">How far apart are the two of you? Tap to refresh.</string>
+
+    <string name="notif_proximity_title">You\'re close 💞</string>
+    <string name="notif_live_title">Sharing your location</string>
+    <string name="notif_live_text">Closer is keeping %1$s updated on where you are.</string>
+    <string name="channel_proximity">Nearby alerts</string>
+    <string name="channel_proximity_desc">Tells you when the two of you come within reach.</string>
+    <string name="channel_live">Location sharing</string>
+    <string name="channel_live_desc">Shows when Live sharing mode is active.</string>
+</resources>
