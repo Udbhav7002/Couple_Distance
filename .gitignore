@@ -10,3 +10,4 @@ closer-release.jks
 captures/
 .DS_Store
 .zcode/
+*.apk
