@@ -64,6 +64,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -92,11 +94,26 @@ fun HomeScreen(vm: AppViewModel) {
     val error by vm.lastError.collectAsState()
     var showSettings by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val haptic = LocalHapticFeedback.current
 
     LaunchedEffect(error) {
         error?.let {
             snackbarHostState.showSnackbar(it)
             vm.clearError()
+        }
+    }
+
+    val prevNearby = remember { mutableStateOf(false) }
+    LaunchedEffect(couple) {
+        val c = couple ?: return@LaunchedEffect
+        val myLoc = c.me.lastLocation
+        val partnerLoc = c.partner?.lastLocation
+        if (myLoc != null && partnerLoc != null) {
+            val dist = com.closer.app.location.DistanceMath.haversineM(myLoc.point, partnerLoc.point)
+            if (dist <= c.radiusM && !prevNearby.value) {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            }
+            prevNearby.value = dist <= c.radiusM
         }
     }
 

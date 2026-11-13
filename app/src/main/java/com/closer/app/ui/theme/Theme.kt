@@ -2,10 +2,14 @@ package com.closer.app.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 
 // Closer's own palette — warm rose accent, consistent across light and dark.
 private val Rose = Color(0xFFFF6B81)
@@ -60,6 +64,20 @@ private val CloserLight = lightColorScheme(
     error = Color(0xFFD32F2F),
 )
 
+val CloserTypography = Typography(
+    headlineLarge = TextStyle(fontSize = 32.sp, fontWeight = FontWeight.Bold, letterSpacing = (-1).sp),
+    headlineMedium = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, letterSpacing = (-0.5).sp),
+    headlineSmall = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.SemiBold),
+    titleLarge = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.SemiBold),
+    titleMedium = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.SemiBold),
+    titleSmall = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium),
+    bodyLarge = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Normal),
+    bodyMedium = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Normal),
+    bodySmall = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Normal),
+    labelLarge = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.5.sp),
+    labelSmall = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp),
+)
+
 @Composable
 fun CloserTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -67,6 +85,7 @@ fun CloserTheme(
 ) {
     MaterialTheme(
         colorScheme = if (darkTheme) CloserDark else CloserLight,
+        typography = CloserTypography,
         content = content,
     )
 }

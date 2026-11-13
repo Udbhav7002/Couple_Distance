@@ -54,6 +54,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 
 /**
  * Reusable Frosted Glass Design System
@@ -284,7 +286,7 @@ fun StylizedCodeDisplay(
 ) {
     val cleanCode = code.trim().uppercase()
     Row(
-        modifier = modifier,
+        modifier = modifier.semantics { contentDescription = "Pairing code: ${cleanCode.chunked(1).joinToString(" ")}" },
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

@@ -28,9 +28,10 @@ class FirebaseBackend : Backend {
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 
     init {
-        db.firestoreSettings = com.google.firebase.firestore.FirebaseFirestoreSettings.Builder()
-            .setPersistenceEnabled(false) // tiny app; latest value only
+        val settings = com.google.firebase.firestore.FirebaseFirestoreSettings.Builder()
+            .setLocalCacheSettings(com.google.firebase.firestore.PersistentCacheSettings.newBuilder().build())
             .build()
+        db.firestoreSettings = settings
     }
 
     override suspend fun ensureAuth(): String {
@@ -65,6 +66,11 @@ class FirebaseBackend : Backend {
             val freshDoc = txn.get(doc.reference)
             val members = (freshDoc.get("members") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
             if (members.size >= 2 && uid !in members) throw PairingException("That couple already has two members")
+            // Reject codes older than 24 hours
+            val createdAt = freshDoc.getLong("createdAt") ?: 0L
+            if (System.currentTimeMillis() - createdAt > 24 * 60 * 60 * 1000L) {
+                throw PairingException("This pairing code has expired. Ask your partner to create a new couple.")
+            }
             txn.update(doc.reference, "members", members + uid)
         }.await()
 

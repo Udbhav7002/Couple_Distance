@@ -27,7 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowForward
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Favorite
@@ -220,7 +220,7 @@ private fun ProfileStep(
         text = if (isEdit) "Update Profile" else "Continue",
         onClick = { onContinue(name.trim(), color) },
         enabled = name.trim().isNotEmpty(),
-        icon = Icons.Rounded.ArrowForward,
+        icon = Icons.AutoMirrored.Rounded.ArrowForward,
     )
 }
 
@@ -361,7 +361,7 @@ private fun PermissionsStep(onContinue: () -> Unit) {
         text = "Continue",
         onClick = onContinue,
         enabled = locationGranted,
-        icon = Icons.Rounded.ArrowForward,
+        icon = Icons.AutoMirrored.Rounded.ArrowForward,
     )
 }
 
