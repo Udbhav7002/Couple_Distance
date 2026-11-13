@@ -48,6 +48,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,15 +68,15 @@ fun SettingsSheet(vm: AppViewModel, onDismiss: () -> Unit) {
     val nearAlerts by vm.nearAlerts.collectAsState()
     val quietFrom by vm.quietFrom.collectAsState()
     val quietTo by vm.quietTo.collectAsState()
-    val usingMock by vm.usingMock.collectAsState()
 
     var editName by remember { mutableStateOf(name) }
     var editColor by remember { mutableIntStateOf(color) }
     var confirmUnpair by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF10141D),
+        containerColor = Color(0xFF0D0E11),
     ) {
         Column(
             modifier = Modifier
@@ -103,21 +105,25 @@ fun SettingsSheet(vm: AppViewModel, onDismiss: () -> Unit) {
                         modifier = Modifier
                             .size(38.dp)
                             .clip(CircleShape)
-                            .background(GlassTheme.RoseGlow.copy(alpha = 0.2f)),
+                            .background(Color(0xFF1E2129))
+                            .border(1.dp, Color(0xFF2E323D), CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Icon(Icons.Rounded.Widgets, null, tint = GlassTheme.RoseGlow, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Rounded.Widgets, null, tint = GlassTheme.AppleRose, modifier = Modifier.size(20.dp))
                     }
                     Spacer(Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Spectacles Home Widget", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
-                        Text("Add the frosted live spectacles to your home screen", fontSize = 12.sp, color = Color(0xFFBAC5D5))
+                        Text("Add the live spectacles to your home screen", fontSize = 12.sp, color = Color(0xFFBAC5D5))
                     }
                 }
                 Spacer(Modifier.height(14.dp))
                 GlowButton(
                     text = "Add Widget to Home Screen",
-                    onClick = { vm.pinWidget() },
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        vm.pinWidget()
+                    },
                     icon = Icons.Rounded.Widgets,
                 )
             }
@@ -139,10 +145,11 @@ fun SettingsSheet(vm: AppViewModel, onDismiss: () -> Unit) {
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
-                        focusedBorderColor = GlassTheme.RoseGlow,
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
-                        focusedContainerColor = Color.White.copy(alpha = 0.05f),
-                        unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
+                        focusedBorderColor = GlassTheme.AppleRose,
+                        unfocusedBorderColor = Color(0xFF2E323D),
+                        focusedContainerColor = Color(0xFF1E2129),
+                        unfocusedContainerColor = Color(0xFF16181D),
+                        cursorColor = GlassTheme.AppleRose,
                     ),
                 )
                 Spacer(Modifier.height(14.dp))
@@ -161,11 +168,14 @@ fun SettingsSheet(vm: AppViewModel, onDismiss: () -> Unit) {
                                 .clip(CircleShape)
                                 .background(Brush.linearGradient(listOf(accent.start, accent.end)))
                                 .border(
-                                    width = if (selected) 2.5.dp else 0.dp,
-                                    color = if (selected) Color.White else Color.Transparent,
+                                    width = if (selected) 2.5.dp else 1.dp,
+                                    color = if (selected) Color.White else Color(0xFF2E323D),
                                     shape = CircleShape,
                                 )
-                                .clickable { editColor = i },
+                                .clickable {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    editColor = i
+                                },
                             contentAlignment = Alignment.Center,
                         ) {
                             if (selected) {
@@ -178,7 +188,10 @@ fun SettingsSheet(vm: AppViewModel, onDismiss: () -> Unit) {
 
                 FrostedButton(
                     text = "Save Profile",
-                    onClick = { vm.updateProfile(editName.trim(), editColor) },
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        vm.updateProfile(editName.trim(), editColor)
+                    },
                     enabled = editName.trim().isNotEmpty(),
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -198,10 +211,15 @@ fun SettingsSheet(vm: AppViewModel, onDismiss: () -> Unit) {
                     }
                     Switch(
                         checked = nearAlerts,
-                        onCheckedChange = { vm.setNearAlerts(it) },
+                        onCheckedChange = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            vm.setNearAlerts(it)
+                        },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.White,
-                            checkedTrackColor = GlassTheme.RoseGlow,
+                            checkedTrackColor = GlassTheme.AppleRose,
+                            uncheckedThumbColor = Color.White.copy(alpha = 0.7f),
+                            uncheckedTrackColor = Color(0xFF2E323D),
                         ),
                     )
                 }
@@ -223,13 +241,16 @@ fun SettingsSheet(vm: AppViewModel, onDismiss: () -> Unit) {
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(if (selected) GlassTheme.RoseGlow else Color.White.copy(alpha = 0.06f))
+                                .background(if (selected) GlassTheme.AppleRose else Color(0xFF1E2129))
                                 .border(
                                     1.dp,
-                                    if (selected) Color.White.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.12f),
+                                    if (selected) Color.White.copy(alpha = 0.25f) else Color(0xFF2E323D),
                                     RoundedCornerShape(12.dp),
                                 )
-                                .clickable { vm.setQuietHours(hours.first, hours.second) }
+                                .clickable {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    vm.setQuietHours(hours.first, hours.second)
+                                }
                                 .padding(vertical = 8.dp),
                             contentAlignment = Alignment.Center,
                         ) {
@@ -239,28 +260,20 @@ fun SettingsSheet(vm: AppViewModel, onDismiss: () -> Unit) {
                 }
             }
 
-            // Demo Controls
-            if (usingMock) {
-                Spacer(Modifier.height(20.dp))
-                Text("DEMO SIMULATION CONTROLS", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White.copy(alpha = 0.5f), letterSpacing = 1.5.sp)
-                Spacer(Modifier.height(10.dp))
-                DebugPartnerPanel(vm)
-            }
-
             Spacer(Modifier.height(24.dp))
 
             // Danger Zone / Unpair
             if (confirmUnpair) {
                 FrostedCard(
                     modifier = Modifier.fillMaxWidth(),
-                    borderBrush = Brush.linearGradient(listOf(Color(0xFFFF6B6B), Color(0xFFFF8E7C))),
+                    borderBrush = Brush.linearGradient(listOf(Color(0xFFFF453A), Color(0xFFFF9F0A))),
                     contentPadding = 16.dp,
                 ) {
                     Text(
                         "Unpair with Partner?",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFFF6B6B),
+                        color = Color(0xFFFF453A),
                     )
                     Spacer(Modifier.height(6.dp))
                     Text(
@@ -280,8 +293,12 @@ fun SettingsSheet(vm: AppViewModel, onDismiss: () -> Unit) {
                                 .weight(1f)
                                 .height(46.dp)
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(Color(0xFFD32F2F))
-                                .clickable { vm.unpair(); onDismiss() },
+                                .background(Color(0xFFFF453A))
+                                .clickable {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    vm.unpair()
+                                    onDismiss()
+                                },
                             contentAlignment = Alignment.Center,
                         ) {
                             Text("Unpair", color = Color.White, fontWeight = FontWeight.Bold)
@@ -290,68 +307,17 @@ fun SettingsSheet(vm: AppViewModel, onDismiss: () -> Unit) {
                 }
             } else {
                 TextButton(
-                    onClick = { confirmUnpair = true },
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        confirmUnpair = true
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Icon(Icons.Rounded.DeleteOutline, null, tint = Color(0xFFFF6B6B), modifier = Modifier.size(18.dp))
+                    Icon(Icons.Rounded.DeleteOutline, null, tint = Color(0xFFFF453A), modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Unpair Couple…", color = Color(0xFFFF6B6B), fontSize = 14.sp)
+                    Text("Unpair Couple…", color = Color(0xFFFF453A), fontSize = 14.sp)
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun DebugPartnerPanel(vm: AppViewModel) {
-    FrostedCard(
-        modifier = Modifier.fillMaxWidth(),
-        contentPadding = 16.dp,
-    ) {
-        Text("Teleport Simulated Partner", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
-        Spacer(Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            listOf(
-                "5 km" to 5_000.0,
-                "1 km" to 1_000.0,
-                "200 m" to 200.0,
-                "50 m" to 50.0,
-                "1 m" to 1.0,
-            ).forEach { (label, meters) ->
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(Color.White.copy(alpha = 0.08f))
-                        .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(10.dp))
-                        .clickable { vm.debugPlacePartner(meters) }
-                        .padding(vertical = 7.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(label, fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Medium)
-                }
-            }
-        }
-        Spacer(Modifier.height(14.dp))
-        Text("Simulated partner walking speed", fontSize = 12.sp, color = Color(0xFFBAC5D5))
-        var speed by remember { mutableFloatStateOf(1.2f) }
-        Slider(
-            value = speed,
-            onValueChange = { speed = it; vm.debugPartnerSpeed(it.toDouble()) },
-            valueRange = 0f..3f,
-            colors = SliderDefaults.colors(
-                thumbColor = GlassTheme.RoseGlow,
-                activeTrackColor = GlassTheme.RoseGlow,
-                inactiveTrackColor = Color.White.copy(alpha = 0.15f),
-            ),
-        )
-        Text(
-            "%.1f m/s (drift speed)".format(speed),
-            fontSize = 11.sp,
-            color = Color(0xFF94A3B8),
-        )
     }
 }

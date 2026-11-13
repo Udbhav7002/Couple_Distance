@@ -2,6 +2,7 @@ package com.closer.app.location
 
 import com.closer.app.data.GeoPoint
 import com.closer.app.data.LocationSample
+import java.util.Locale
 import kotlin.math.asin
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -58,7 +59,7 @@ object DistanceMath {
     fun formatDistance(meters: Double): String = when {
         meters < 1.0 -> "${(meters * 100).roundToInt()} cm"
         meters < 1000.0 -> "${meters.roundToInt()} m"
-        meters < 10_000.0 -> String.format("%.1f km", meters / 1000.0)
+        meters < 10_000.0 -> String.format(Locale.US, "%.1f km", meters / 1000.0)
         else -> "${(meters / 1000.0).roundToInt()} km"
     }
 

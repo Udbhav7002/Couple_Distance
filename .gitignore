@@ -11,3 +11,4 @@ captures/
 .DS_Store
 .zcode/
 *.apk
+.agents/

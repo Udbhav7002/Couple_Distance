@@ -52,6 +52,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -123,6 +125,7 @@ private fun ProfileStep(
 ) {
     var name by remember { mutableStateOf(initialName) }
     var color by remember { mutableIntStateOf(initialColor) }
+    val haptic = LocalHapticFeedback.current
 
     SpectaclesVisual(
         myInitial = if (name.isEmpty()) "?" else name,
@@ -171,11 +174,11 @@ private fun ProfileStep(
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = Color.White,
                 unfocusedTextColor = Color.White,
-                focusedBorderColor = GlassTheme.RoseGlow,
-                unfocusedBorderColor = Color.White.copy(alpha = 0.18f),
-                focusedContainerColor = Color.White.copy(alpha = 0.05f),
-                unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
-                cursorColor = GlassTheme.RoseGlow,
+                focusedBorderColor = GlassTheme.AppleRose,
+                unfocusedBorderColor = Color(0xFF2E323D),
+                focusedContainerColor = Color(0xFF1E2129),
+                unfocusedContainerColor = Color(0xFF16181D),
+                cursorColor = GlassTheme.AppleRose,
             ),
         )
         Spacer(Modifier.height(20.dp))
@@ -194,11 +197,14 @@ private fun ProfileStep(
                         .clip(CircleShape)
                         .background(Brush.linearGradient(listOf(accent.start, accent.end)))
                         .border(
-                            width = if (selected) 2.5.dp else 0.dp,
-                            color = if (selected) Color.White else Color.Transparent,
+                            width = if (selected) 2.5.dp else 1.dp,
+                            color = if (selected) Color.White else Color(0xFF2E323D),
                             shape = CircleShape,
                         )
-                        .clickable { color = i },
+                        .clickable {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            color = i
+                        },
                     contentAlignment = Alignment.Center,
                 ) {
                     if (selected) {
@@ -267,10 +273,11 @@ private fun PermissionsStep(onContinue: () -> Unit) {
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF2E86DE).copy(alpha = 0.2f)),
+                    .background(Color(0xFF1E2129))
+                    .border(1.dp, Color(0xFF2E323D), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Rounded.LocationOn, null, tint = Color(0xFF54D3F0), modifier = Modifier.size(22.dp))
+                Icon(Icons.Rounded.LocationOn, null, tint = GlassTheme.AppleTeal, modifier = Modifier.size(22.dp))
             }
             Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -282,9 +289,9 @@ private fun PermissionsStep(onContinue: () -> Unit) {
 
         if (locationGranted) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Rounded.Check, null, tint = Color(0xFF3ECFC0), modifier = Modifier.size(18.dp))
+                Icon(Icons.Rounded.Check, null, tint = GlassTheme.AppleTeal, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Location permission granted", fontSize = 13.sp, color = Color(0xFF3ECFC0), fontWeight = FontWeight.Medium)
+                Text("Location permission granted", fontSize = 13.sp, color = GlassTheme.AppleTeal, fontWeight = FontWeight.Medium)
             }
         } else {
             FrostedButton(
@@ -315,10 +322,11 @@ private fun PermissionsStep(onContinue: () -> Unit) {
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(GlassTheme.RoseGlow.copy(alpha = 0.2f)),
+                        .background(Color(0xFF1E2129))
+                        .border(1.dp, Color(0xFF2E323D), CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(Icons.Rounded.Notifications, null, tint = GlassTheme.RoseGlow, modifier = Modifier.size(22.dp))
+                    Icon(Icons.Rounded.Notifications, null, tint = GlassTheme.AppleRose, modifier = Modifier.size(22.dp))
                 }
                 Spacer(Modifier.width(14.dp))
                 Column(modifier = Modifier.weight(1f)) {
@@ -330,9 +338,9 @@ private fun PermissionsStep(onContinue: () -> Unit) {
 
             if (notificationGranted) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Rounded.Check, null, tint = Color(0xFF3ECFC0), modifier = Modifier.size(18.dp))
+                    Icon(Icons.Rounded.Check, null, tint = GlassTheme.AppleTeal, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Alerts enabled", fontSize = 13.sp, color = Color(0xFF3ECFC0), fontWeight = FontWeight.Medium)
+                    Text("Alerts enabled", fontSize = 13.sp, color = GlassTheme.AppleTeal, fontWeight = FontWeight.Medium)
                 }
             } else {
                 FrostedButton(
@@ -351,7 +359,7 @@ private fun PermissionsStep(onContinue: () -> Unit) {
         Text(
             "Location is required to calculate the distance to your partner.",
             fontSize = 12.sp,
-            color = Color(0xFFFF8E7C),
+            color = GlassTheme.AppleAmber,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(bottom = 12.dp),
         )
@@ -376,7 +384,6 @@ private fun PairStep(
     var creating by remember { mutableStateOf(false) }
     var joining by remember { mutableStateOf(false) }
     val error by vm.lastError.collectAsState()
-    val mock by vm.usingMock.collectAsState()
 
     Text(
         "Pair With Partner",
@@ -394,26 +401,6 @@ private fun PairStep(
     )
     Spacer(Modifier.height(24.dp))
 
-    if (mock) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(Color.White.copy(alpha = 0.05f))
-                .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                "✨ Demo Mode: Simulated partner ready. No setup needed.",
-                fontSize = 12.sp,
-                color = Color(0xFFFFB3C6),
-                fontWeight = FontWeight.Medium,
-            )
-        }
-        Spacer(Modifier.height(20.dp))
-    }
-
     // Card 1: Create our couple
     FrostedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -424,10 +411,11 @@ private fun PairStep(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(GlassTheme.RoseGlow.copy(alpha = 0.2f)),
+                    .background(Color(0xFF1E2129))
+                    .border(1.dp, Color(0xFF2E323D), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Rounded.Favorite, null, tint = GlassTheme.RoseGlow, modifier = Modifier.size(20.dp))
+                Icon(Icons.Rounded.Favorite, null, tint = GlassTheme.AppleRose, modifier = Modifier.size(20.dp))
             }
             Spacer(Modifier.width(12.dp))
             Column {
@@ -456,7 +444,7 @@ private fun PairStep(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
-        Box(modifier = Modifier.weight(1f).height(1.dp).background(Color.White.copy(alpha = 0.12f)))
+        Box(modifier = Modifier.weight(1f).height(1.dp).background(Color(0xFF262933)))
         Text(
             "  OR JOIN EXISTING LINK  ",
             fontSize = 11.sp,
@@ -464,7 +452,7 @@ private fun PairStep(
             color = Color.White.copy(alpha = 0.5f),
             letterSpacing = 1.sp,
         )
-        Box(modifier = Modifier.weight(1f).height(1.dp).background(Color.White.copy(alpha = 0.12f)))
+        Box(modifier = Modifier.weight(1f).height(1.dp).background(Color(0xFF262933)))
     }
 
     Spacer(Modifier.height(20.dp))
@@ -476,10 +464,11 @@ private fun PairStep(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(GlassTheme.VioletGlow.copy(alpha = 0.2f)),
+                    .background(Color(0xFF1E2129))
+                    .border(1.dp, Color(0xFF2E323D), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Rounded.Link, null, tint = GlassTheme.VioletGlow, modifier = Modifier.size(20.dp))
+                Icon(Icons.Rounded.Link, null, tint = GlassTheme.AppleIndigo, modifier = Modifier.size(20.dp))
             }
             Spacer(Modifier.width(12.dp))
             Column {
@@ -500,11 +489,11 @@ private fun PairStep(
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = Color.White,
                 unfocusedTextColor = Color.White,
-                focusedBorderColor = GlassTheme.VioletGlow,
-                unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
-                focusedContainerColor = Color.White.copy(alpha = 0.05f),
-                unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
-                cursorColor = GlassTheme.VioletGlow,
+                focusedBorderColor = GlassTheme.AppleIndigo,
+                unfocusedBorderColor = Color(0xFF2E323D),
+                focusedContainerColor = Color(0xFF1E2129),
+                unfocusedContainerColor = Color(0xFF16181D),
+                cursorColor = GlassTheme.AppleIndigo,
             ),
         )
         Spacer(Modifier.height(14.dp))

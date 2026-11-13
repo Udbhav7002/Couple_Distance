@@ -4,29 +4,29 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Left lens -->
+    <!-- Left lens: center (36, 54), radius 12, stroke 6 -> x in [21, 51], y in [39, 69] -->
     <path
-        android:pathData="M 27 54 m 0 0 a 13.5 13.5 0 1 1 27 0 a 13.5 13.5 0 1 1 -27 0"
-        android:strokeColor="#FFF2F4F7"
-        android:strokeWidth="7"
-        android:fillColor="#00000000"
-        android:strokeLineCap="round" />
-    <!-- Right lens -->
-    <path
-        android:pathData="M 81 54 m 0 0 a 13.5 13.5 0 1 1 27 0 a 13.5 13.5 0 1 1 -27 0"
-        android:strokeColor="#FFF2F4F7"
-        android:strokeWidth="7"
-        android:fillColor="#00000000"
-        android:strokeLineCap="round" />
-    <!-- Bridge -->
-    <path
-        android:pathData="M 52.5 49 L 55.5 49"
+        android:pathData="M 36 54 m -12 0 a 12 12 0 1 1 24 0 a 12 12 0 1 1 -24 0"
         android:strokeColor="#FFF2F4F7"
         android:strokeWidth="6"
         android:fillColor="#00000000"
         android:strokeLineCap="round" />
-    <!-- Bead on the bridge -->
+    <!-- Right lens: center (72, 54), radius 12, stroke 6 -> x in [57, 87], y in [39, 69] -->
     <path
-        android:pathData="M 54 49 m -3.5 0 a 3.5 3.5 0 1 1 7 0 a 3.5 3.5 0 1 1 -7 0"
-        android:fillColor="#FFFF7A9C" />
+        android:pathData="M 72 54 m -12 0 a 12 12 0 1 1 24 0 a 12 12 0 1 1 -24 0"
+        android:strokeColor="#FFF2F4F7"
+        android:strokeWidth="6"
+        android:fillColor="#00000000"
+        android:strokeLineCap="round" />
+    <!-- Bridge: connected horizontal line from (47, 54) to (61, 54), stroke 5 -->
+    <path
+        android:pathData="M 47 54 L 61 54"
+        android:strokeColor="#FFF2F4F7"
+        android:strokeWidth="5"
+        android:fillColor="#00000000"
+        android:strokeLineCap="round" />
+    <!-- Bead on Bridge: center (54, 54), radius 4, Apple Matte Rose #FFFF375F -->
+    <path
+        android:pathData="M 54 54 m -4 0 a 4 4 0 1 1 8 0 a 4 4 0 1 1 -8 0"
+        android:fillColor="#FFFF375F" />
 </vector>

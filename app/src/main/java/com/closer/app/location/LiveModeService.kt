@@ -23,8 +23,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /**
- * Live mode: optional foreground service that keeps your side fresh while you
- * move (≥50 m or 90 s), so your partner's widget is always current.
+ * Live mode: high-accuracy foreground service that keeps your side fresh while you
+ * move (≥0.5 m or 3 s), so your partner's widget and app are always current in real-time.
  */
 class LiveModeService : Service() {
 
@@ -56,9 +56,10 @@ class LiveModeService : Service() {
         Locator.container.snapshots.load().partnerInitial.ifBlank { "your partner" }
 
     private fun startTracking() {
-        val request = LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, 30_000L)
-            .setMinUpdateDistanceMeters(25f)
-            .setWaitForAccurateLocation(false)
+        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 3_000L)
+            .setMinUpdateIntervalMillis(1_000L)
+            .setMinUpdateDistanceMeters(0f)
+            .setWaitForAccurateLocation(true)
             .build()
         val callback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
@@ -74,7 +75,7 @@ class LiveModeService : Service() {
                 if (moved || now - lastPushedAt > MIN_INTERVAL_MS) {
                     lastPushed = sample
                     lastPushedAt = now
-                    scope.launch { Refresher.sync(this@LiveModeService, sample = sample) }
+                    scope.launch { Refresher.sync(this@LiveModeService, sample = sample, isLive = true) }
                 }
             }
         }
@@ -91,8 +92,8 @@ class LiveModeService : Service() {
 
     companion object {
         const val ACTION_STOP = "com.closer.app.LIVE_STOP"
-        private const val MIN_MOVE_M = 50.0
-        private const val MIN_INTERVAL_MS = 90_000L
+        private const val MIN_MOVE_M = 0.5
+        private const val MIN_INTERVAL_MS = 3_000L
 
         fun start(context: Context) {
             context.startForegroundService(Intent(context, LiveModeService::class.java))

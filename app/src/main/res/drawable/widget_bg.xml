@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Base translucent dark glass for contrast against bright wallpapers -->
+    <!-- Base velvety dark matte surface -->
     <item>
         <shape android:shape="rectangle">
             <corners android:radius="26dp" />
@@ -8,18 +8,12 @@
         </shape>
     </item>
 
-    <!-- Translucent frosted glass gradient with specular reflection -->
+    <!-- Subtle micro-border -->
     <item>
         <shape android:shape="rectangle">
             <corners android:radius="26dp" />
-            <gradient
-                android:angle="270"
-                android:startColor="#47FFFFFF"
-                android:centerColor="#22FFFFFF"
-                android:endColor="#14FFFFFF"
-                android:type="linear" />
             <stroke
-                android:width="1.2dp"
+                android:width="1dp"
                 android:color="@color/widget_glass_stroke" />
         </shape>
     </item>

@@ -1,16 +1,9 @@
 package com.closer.app.ui.components
 
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -23,8 +16,8 @@ import androidx.compose.ui.graphics.nativeCanvas
 import com.closer.app.ui.theme.Palette
 
 /**
- * The signature spectacles: two gradient lenses with initials, a bridge line,
- * and the distance sitting on the line like a bead.
+ * Apple-style matte spectacles: two crisp matte lenses with initials, a connected bridge line,
+ * and a clean solid distance bead pill sitting on the bridge.
  */
 @Composable
 fun SpectaclesVisual(
@@ -38,12 +31,6 @@ fun SpectaclesVisual(
     modifier: Modifier = Modifier,
 ) {
     val isDark = isSystemInDarkTheme()
-    val glow = rememberInfiniteTransition(label = "glow").animateFloat(
-        initialValue = 0.35f,
-        targetValue = 0.9f,
-        animationSpec = infiniteRepeatable(tween(900), RepeatMode.Reverse),
-        label = "glowAlpha",
-    )
 
     Canvas(modifier) {
         val h = size.height
@@ -54,14 +41,14 @@ fun SpectaclesVisual(
         val right = Offset(w - marginX - lensR, h / 2f)
 
         // ---- bridge line ----
-        val bridgeColor = if (nearby) Color(0xFFFF7A9C)
-            else if (isDark) Color.White.copy(alpha = 0.55f)
+        val bridgeColor = if (nearby) Color(0xFFFF375F)
+            else if (isDark) Color.White.copy(alpha = 0.35f)
             else Color.Black.copy(alpha = 0.25f)
         drawLine(
             color = bridgeColor,
             start = Offset(left.x + lensR * 0.9f, h / 2f),
             end = Offset(right.x - lensR * 0.9f, h / 2f),
-            strokeWidth = h * 0.022f,
+            strokeWidth = h * 0.024f,
             cap = StrokeCap.Round,
         )
 
@@ -71,17 +58,7 @@ fun SpectaclesVisual(
             Triple(right, partnerColorIndex, partnerInitial),
         )
         for ((center, colorIndex, initial) in pairs) {
-            if (nearby) {
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        listOf(Color(0xFFFF7A9C).copy(alpha = glow.value * 0.55f), Color.Transparent),
-                        center = center,
-                        radius = lensR * 1.7f,
-                    ),
-                    radius = lensR * 1.7f,
-                    center = center,
-                )
-            }
+            // Crisp matte lens fill
             drawCircle(
                 brush = Brush.linearGradient(
                     listOf(
@@ -94,11 +71,12 @@ fun SpectaclesVisual(
                 radius = lensR,
                 center = center,
             )
+            // Subtle 1dp micro-border
             drawCircle(
-                color = if (isDark) Color.White.copy(alpha = 0.35f) else Color.White.copy(alpha = 0.65f),
-                radius = lensR * 0.92f,
+                color = if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.10f),
+                radius = lensR,
                 center = center,
-                style = Stroke(width = lensR * 0.09f),
+                style = Stroke(width = 1.2f),
             )
             drawIntoCanvas { canvas ->
                 val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
@@ -122,8 +100,8 @@ fun SpectaclesVisual(
                 textSize = beadH * 0.52f
                 textAlign = android.graphics.Paint.Align.CENTER
                 color = if (nearby) android.graphics.Color.WHITE
-                    else if (isDark) 0xE614181C.toInt()
-                    else 0xE614181C.toInt()
+                    else if (isDark) 0xFFF2F4F7.toInt()
+                    else 0xFF14181C.toInt()
             }
             val text = if (refreshing) "…" else distanceText
             val textW = textPaint.measureText(text)
@@ -136,17 +114,22 @@ fun SpectaclesVisual(
             )
             val fill = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
                 if (nearby) {
-                    shader = android.graphics.LinearGradient(
-                        rect.left, rect.top, rect.right, rect.bottom,
-                        0xFFFF7A9C.toInt(), 0xFFFF9671.toInt(),
-                        android.graphics.Shader.TileMode.CLAMP,
-                    )
+                    color = 0xFFFF375F.toInt() // Solid Apple Rose
                 } else {
-                    color = if (isDark) 0xD9FFFFFF.toInt() else 0xD9E8E4DF.toInt()
+                    color = if (isDark) 0xFF1E2129.toInt() else 0xFFE2E4EA.toInt()
                 }
             }
             canvas.nativeCanvas.drawRoundRect(
                 rect.left, rect.top, rect.right, rect.bottom, beadH / 2f, beadH / 2f, fill,
+            )
+            // Subtle 1dp micro-border around distance bead pill
+            val borderPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                style = android.graphics.Paint.Style.STROKE
+                strokeWidth = 1.5f
+                color = if (nearby) 0x33FFFFFF else if (isDark) 0xFF2E323D.toInt() else 0x22000000
+            }
+            canvas.nativeCanvas.drawRoundRect(
+                rect.left, rect.top, rect.right, rect.bottom, beadH / 2f, beadH / 2f, borderPaint,
             )
             val baseline = h / 2f - (textPaint.ascent() + textPaint.descent()) / 2f
             canvas.nativeCanvas.drawText(text, cx, baseline, textPaint)

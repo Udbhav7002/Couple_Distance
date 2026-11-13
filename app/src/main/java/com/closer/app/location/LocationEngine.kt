@@ -45,7 +45,7 @@ class LocationEngine(private val context: Context) {
         val request = LocationRequest.Builder(priority, 1_000L)
             .setMinUpdateIntervalMillis(500)
             .setMaxUpdates(1)
-            .setWaitForAccurateLocation(false)
+            .setWaitForAccurateLocation(true)
             .build()
         return withTimeoutOrNull(timeoutMs) {
             suspendCancellableCoroutine { cont ->

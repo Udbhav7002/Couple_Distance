@@ -135,10 +135,14 @@ fun HomeScreen(vm: AppViewModel) {
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                     actions = {
                         IconButton(
-                            onClick = { showSettings = true },
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                showSettings = true
+                            },
                             modifier = Modifier
                                 .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.08f)),
+                                .background(Color(0xFF1E2129))
+                                .border(1.dp, Color(0xFF2E323D), CircleShape),
                         ) {
                             Icon(Icons.Rounded.Settings, "Settings", tint = Color.White)
                         }
@@ -219,7 +223,6 @@ private fun NotPairedCard(vm: AppViewModel) {
 private fun WaitingCard(state: CoupleState, vm: AppViewModel) {
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
-    val usingMock by vm.usingMock.collectAsState()
 
     Spacer(Modifier.height(16.dp))
     SpectaclesVisual(
@@ -293,39 +296,6 @@ private fun WaitingCard(state: CoupleState, vm: AppViewModel) {
             )
         }
     }
-
-    if (usingMock) {
-        Spacer(Modifier.height(24.dp))
-        FrostedCard(
-            modifier = Modifier.fillMaxWidth(),
-            borderBrush = GlassTheme.VioletGradient,
-            contentPadding = 18.dp,
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(GlassTheme.VioletGlow.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Icons.Rounded.SmartToy, null, tint = GlassTheme.VioletGlow, modifier = Modifier.size(20.dp))
-                }
-                Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text("Testing on one phone?", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
-                    Text("Connect a simulated partner to test the live distance widget immediately.", fontSize = 12.sp, color = Color(0xFFBAC5D5))
-                }
-            }
-            Spacer(Modifier.height(14.dp))
-            GlowButton(
-                text = "Connect Demo Partner",
-                onClick = { vm.connectDemoPartner() },
-                gradient = GlassTheme.VioletGradient,
-                icon = Icons.Rounded.SmartToy,
-            )
-        }
-    }
 }
 
 @Composable
@@ -369,14 +339,14 @@ private fun PairedContent(
     // Hero Distance Display
     Text(
         distance?.let { DistanceMath.formatDistance(it) } ?: "waiting for fix…",
-        fontSize = 48.sp,
-        fontWeight = FontWeight.ExtraBold,
+        fontSize = 44.sp,
+        fontWeight = FontWeight.Bold,
         letterSpacing = (-1).sp,
-        color = if (nearby) GlassTheme.RoseGlow else Color.White,
+        color = if (nearby) GlassTheme.AppleRose else Color.White,
     )
     if (nearby) {
         Spacer(Modifier.height(4.dp))
-        Text("Within reach 💕", color = GlassTheme.RoseGlow, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        Text("Within reach 💕", color = GlassTheme.AppleRose, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
     }
 
     // Compass Bearing
@@ -386,13 +356,14 @@ private fun PairedContent(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .clip(RoundedCornerShape(12.dp))
-                .background(Color.White.copy(alpha = 0.06f))
+                .background(Color(0xFF1E2129))
+                .border(1.dp, Color(0xFF2E323D), RoundedCornerShape(12.dp))
                 .padding(horizontal = 12.dp, vertical = 6.dp),
         ) {
             Icon(
                 Icons.Rounded.Navigation,
                 contentDescription = "Bearing",
-                tint = GlassTheme.RoseGlow,
+                tint = GlassTheme.AppleRose,
                 modifier = Modifier.size(16.dp).rotate(bearing),
             )
             Spacer(Modifier.width(6.dp))
@@ -426,6 +397,8 @@ private fun PairedContent(
 
     Spacer(Modifier.height(24.dp))
 
+    val haptic = LocalHapticFeedback.current
+
     // Radius selector
     FrostedCard(modifier = Modifier.fillMaxWidth(), contentPadding = 16.dp) {
         Text("Nearby Alert Threshold", fontSize = 13.sp, color = Color(0xFFBAC5D5), fontWeight = FontWeight.Medium)
@@ -440,13 +413,16 @@ private fun PairedContent(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(if (selected) GlassTheme.RoseGlow else Color.White.copy(alpha = 0.06f))
+                        .background(if (selected) GlassTheme.AppleRose else Color(0xFF1E2129))
                         .border(
                             width = 1.dp,
-                            color = if (selected) Color.White.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.12f),
+                            color = if (selected) Color.White.copy(alpha = 0.25f) else Color(0xFF2E323D),
                             shape = RoundedCornerShape(14.dp),
                         )
-                        .clickable { vm.setRadius(r) }
+                        .clickable {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            vm.setRadius(r)
+                        }
                         .padding(vertical = 10.dp),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -480,13 +456,16 @@ private fun PairedContent(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(if (selected) Color(0xFF6C5CE7) else Color.White.copy(alpha = 0.06f))
+                        .background(if (selected) GlassTheme.AppleIndigo else Color(0xFF1E2129))
                         .border(
                             width = 1.dp,
-                            color = if (selected) Color.White.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.12f),
+                            color = if (selected) Color.White.copy(alpha = 0.25f) else Color(0xFF2E323D),
                             shape = RoundedCornerShape(14.dp),
                         )
-                        .clickable { vm.setMode(m) }
+                        .clickable {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            vm.setMode(m)
+                        }
                         .padding(vertical = 10.dp),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -518,15 +497,20 @@ private fun PairedContent(
                     .size(36.dp)
                     .clip(CircleShape)
                     .background(
-                        if (state.me.sharingOn) GlassTheme.RoseGlow.copy(alpha = 0.2f)
-                        else Color.White.copy(alpha = 0.08f)
+                        if (state.me.sharingOn) GlassTheme.AppleRose.copy(alpha = 0.2f)
+                        else Color(0xFF1E2129)
+                    )
+                    .border(
+                        1.dp,
+                        if (state.me.sharingOn) GlassTheme.AppleRose.copy(alpha = 0.4f) else Color(0xFF2E323D),
+                        CircleShape,
                     ),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     if (state.me.sharingOn) Icons.Rounded.PlayArrow else Icons.Rounded.Pause,
                     null,
-                    tint = if (state.me.sharingOn) GlassTheme.RoseGlow else Color.White.copy(alpha = 0.6f),
+                    tint = if (state.me.sharingOn) GlassTheme.AppleRose else Color.White.copy(alpha = 0.6f),
                     modifier = Modifier.size(20.dp),
                 )
             }
@@ -546,12 +530,15 @@ private fun PairedContent(
             }
             Switch(
                 checked = state.me.sharingOn,
-                onCheckedChange = { vm.setSharing(it) },
+                onCheckedChange = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    vm.setSharing(it)
+                },
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = Color.White,
-                    checkedTrackColor = GlassTheme.RoseGlow,
+                    checkedTrackColor = GlassTheme.AppleRose,
                     uncheckedThumbColor = Color.White.copy(alpha = 0.7f),
-                    uncheckedTrackColor = Color.White.copy(alpha = 0.15f),
+                    uncheckedTrackColor = Color(0xFF2E323D),
                 ),
             )
         }
@@ -563,8 +550,8 @@ private fun FrostedStatusChip(name: String, ts: Long?, sharingOn: Boolean) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
-            .background(Color.White.copy(alpha = 0.07f))
-            .border(1.dp, Color.White.copy(alpha = 0.14f), RoundedCornerShape(12.dp))
+            .background(Color(0xFF1E2129))
+            .border(1.dp, Color(0xFF2E323D), RoundedCornerShape(12.dp))
             .padding(horizontal = 14.dp, vertical = 7.dp),
     ) {
         Text(

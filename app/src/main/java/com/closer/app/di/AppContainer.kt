@@ -3,7 +3,7 @@ package com.closer.app.di
 import android.content.Context
 import com.closer.app.backend.Backend
 import com.closer.app.backend.FirebaseBackend
-import com.closer.app.backend.MockBackend
+import com.closer.app.backend.relay.LiveRelayBackend
 import com.closer.app.data.SettingsStore
 import com.closer.app.data.SnapshotStore
 import com.closer.app.location.LocationEngine
@@ -20,12 +20,10 @@ class AppContainer(context: Context) {
     val locationEngine = LocationEngine(appContext)
     val notifier = Notifier(appContext)
 
-    /** Firebase when configured (google-services.json present), mock otherwise. */
+    /** Firebase when configured (google-services.json present), live relay backend otherwise. */
     val backend: Backend =
         if (FirebaseApp.getApps(appContext).isNotEmpty()) FirebaseBackend()
-        else MockBackend(appContext)
-
-    val mock: MockBackend? get() = backend as? MockBackend
+        else LiveRelayBackend(appContext)
 
     val usingFirebase: Boolean get() = backend is FirebaseBackend
 }

@@ -10,74 +10,151 @@ import android.graphics.Shader
 import android.graphics.Typeface
 import android.widget.RemoteViews
 import com.closer.app.R
+import com.closer.app.data.ConnectionStatus
 import com.closer.app.data.WidgetSnapshot
 import com.closer.app.location.DistanceMath
 import com.closer.app.ui.theme.Palette
 import kotlin.math.roundToInt
 
+/** Supported selectable widget dimensions. */
+enum class WidgetSize {
+    SIZE_1x2,
+    SIZE_1x3,
+    SIZE_2x3,
+    SIZE_4x3;
+
+    val isSingleColumn: Boolean
+        get() = this == SIZE_1x2 || this == SIZE_1x3
+}
+
 /**
- * Draws the spectacles. Lenses and the distance bead are runtime bitmaps —
- * that buys real gradients, glow and perfect text centering that plain
- * RemoteViews drawables can't do.
+ * Renders RemoteViews for all multi-size spectacles widgets (1x2, 1x3, 2x3, 4x3).
+ *
+ * - 1-column layouts (1x2, 1x3): Vertically stacked layout with vertical bridge line and horizontal bead pill.
+ * - Multi-column layouts (2x3, 4x3): Horizontal layout with horizontal bridge line and live distance bead.
+ * - Tactile matte Apple-style design with crisp rendered bitmaps and 5 connection statuses.
+ * - View ID presence is strictly guarded per layout to prevent RemoteViews warnings/exceptions.
  */
 object WidgetRenderer {
 
     private val beadTextDark = 0xE614181C.toInt()
     private val bridgeColor = 0x8CFFFFFF.toInt()
 
-    fun remoteViews(context: Context, s: WidgetSnapshot, compact: Boolean): RemoteViews {
-        val layout = if (compact) R.layout.widget_spectacles_compact else R.layout.widget_spectacles
-        val rv = RemoteViews(context.packageName, layout)
+    fun remoteViews(context: Context, s: WidgetSnapshot, size: WidgetSize = WidgetSize.SIZE_4x3): RemoteViews {
+        val layoutRes = when (size) {
+            WidgetSize.SIZE_1x2 -> R.layout.widget_spectacles_1x2
+            WidgetSize.SIZE_1x3 -> R.layout.widget_spectacles_1x3
+            WidgetSize.SIZE_2x3 -> R.layout.widget_spectacles_2x3
+            WidgetSize.SIZE_4x3 -> R.layout.widget_spectacles_4x3
+        }
+
+        val rv = RemoteViews(context.packageName, layoutRes)
         val d = context.resources.displayMetrics.density
-        val lensPx = ((if (compact) 30f else 36f) * d).roundToInt()
-        val beadH = ((if (compact) 22f else 26f) * d)
+        val now = System.currentTimeMillis()
+
+        // Sizing per layout
+        val lensDp = when (size) {
+            WidgetSize.SIZE_1x2 -> 28f
+            WidgetSize.SIZE_1x3 -> 30f
+            WidgetSize.SIZE_2x3 -> 34f
+            WidgetSize.SIZE_4x3 -> 40f
+        }
+        val beadHdp = when (size) {
+            WidgetSize.SIZE_1x2 -> 22f
+            WidgetSize.SIZE_1x3 -> 24f
+            WidgetSize.SIZE_2x3 -> 24f
+            WidgetSize.SIZE_4x3 -> 28f
+        }
+
+        val lensPx = (lensDp * d).roundToInt()
+        val beadH = beadHdp * d
 
         val near = s.nearby && !s.paused
-        val dimAll = s.partnerUpdatedAtMs?.let { System.currentTimeMillis() - it > 30 * 60_000 } == true
+        val dimAll = s.partnerUpdatedAtMs?.let { now - it > 30 * 60_000 } == true
+        val status = s.connectionStatus(now)
 
+        // 1. Render tactile matte lens bitmaps
         val meLens = lens(context, lensPx.toFloat(), s.myInitial, s.myColorIndex, near, dimAll || s.paused)
         val partnerLens = lens(context, lensPx.toFloat(), s.partnerInitial, s.partnerColorIndex, near, dimAll || s.paused)
         rv.setImageViewBitmap(R.id.lens_me, meLens)
         rv.setImageViewBitmap(R.id.lens_partner, partnerLens)
 
+        // 2. Render distance bead bitmap
         val beadText = when {
             s.refreshing -> "…"
             s.paused -> "paused"
-            !s.paired -> "add partner"
-            s.distanceM == null -> "no fix yet"
+            !s.paired -> if (size.isSingleColumn) "pair" else "add partner"
+            s.distanceM == null -> if (size.isSingleColumn) "no fix" else "no fix yet"
             else -> DistanceMath.formatDistance(s.distanceM)
         }
         rv.setImageViewBitmap(R.id.bead, bead(context, beadText, near, beadH))
+
+        // 3. Bridge line styling
         rv.setInt(R.id.bridge_line, "setBackgroundColor", if (near) 0x99FF7A9C.toInt() else bridgeColor)
 
-        rv.setTextViewText(R.id.footer, footerText(s, dimAll))
-        if (s.paused) {
-            rv.setTextColor(R.id.footer, 0xB3FFFFFF.toInt())
-        } else if (near) {
-            rv.setTextColor(R.id.footer, 0xFFFFB3C6.toInt())
-        } else {
-            rv.setTextColor(R.id.footer, 0xE6FFFFFF.toInt())
+        // 4. Status chip (only for layouts containing R.id.status_chip: 1x3, 2x3, 4x3)
+        if (size != WidgetSize.SIZE_1x2) {
+            val statusDisplay = if (!s.paired) "Pair up" else status.displayLabel
+            val statusColor = when (status) {
+                ConnectionStatus.Live -> 0xFF4ADE80.toInt()      // Emerald
+                ConnectionStatus.Nearby -> 0xFFFF7A9C.toInt()    // Rose/Coral
+                ConnectionStatus.Connected -> 0xE6FFFFFF.toInt() // Crisp white
+                ConnectionStatus.Paused -> 0xB3FFFFFF.toInt()    // Muted
+                ConnectionStatus.LastSeen -> 0x80FFFFFF.toInt()  // Dimmed
+            }
+            rv.setTextViewText(R.id.status_chip, statusDisplay)
+            rv.setTextColor(R.id.status_chip, if (!s.paired) 0x99FFFFFF.toInt() else statusColor)
         }
 
+        // 5. Large distance readout (only for layout containing R.id.distance_readout: 4x3)
+        if (size == WidgetSize.SIZE_4x3) {
+            val distanceReadoutText = when {
+                s.refreshing -> "Refreshing…"
+                s.paused -> "Sharing paused"
+                !s.paired -> "Ready to pair"
+                s.distanceM != null -> DistanceMath.formatDistance(s.distanceM)
+                else -> "Finding location…"
+            }
+            rv.setTextViewText(R.id.distance_readout, distanceReadoutText)
+            rv.setTextColor(R.id.distance_readout, 0xFFFFFFFF.toInt())
+        }
+
+        // 6. Footer text and color
+        val footer = footerText(s, size, dimAll, now)
+        rv.setTextViewText(R.id.footer, footer)
+        val footerColor = when {
+            s.paused -> 0xB3FFFFFF.toInt()
+            near -> 0xFFFFB3C6.toInt()
+            else -> 0xD9FFFFFF.toInt()
+        }
+        rv.setTextColor(R.id.footer, footerColor)
+
+        // 7. Interactive PendingIntents
         rv.setOnClickPendingIntent(
             R.id.widget_root,
-            SpectaclesWidgetProvider.refreshPendingIntent(context),
+            BaseSpectaclesWidgetProvider.refreshPendingIntent(context),
         )
         rv.setOnClickPendingIntent(
             R.id.footer,
-            SpectaclesWidgetProvider.openAppPendingIntent(context),
+            BaseSpectaclesWidgetProvider.openAppPendingIntent(context),
         )
+
         return rv
     }
 
-    private fun footerText(s: WidgetSnapshot, stale: Boolean): String {
-        val now = System.currentTimeMillis()
+    /** Compatibility helper for binary compact flag. */
+    fun remoteViews(context: Context, s: WidgetSnapshot, compact: Boolean): RemoteViews =
+        remoteViews(context, s, if (compact) WidgetSize.SIZE_2x3 else WidgetSize.SIZE_4x3)
+
+    private fun footerText(s: WidgetSnapshot, size: WidgetSize, stale: Boolean, now: Long): String {
         return when {
             s.refreshing -> "refreshing…"
-            s.paused -> "sharing paused — tap to resume"
-            !s.paired -> "open Closer to pair up"
-            s.distanceM == null -> "waiting for a location…"
-            stale -> "them: last seen " + relative(s.partnerUpdatedAtMs, now)
+            s.paused -> if (size == WidgetSize.SIZE_1x2) "paused" else "sharing paused — tap to resume"
+            !s.paired -> if (size == WidgetSize.SIZE_1x2) "tap to pair" else "open Closer to pair up"
+            s.distanceM == null -> if (size == WidgetSize.SIZE_1x2) "waiting…" else "waiting for a location…"
+            size == WidgetSize.SIZE_1x2 -> s.resolveStatus(now)
+            stale || s.connectionStatus(now) == ConnectionStatus.LastSeen ->
+                "them: last seen " + relative(s.partnerUpdatedAtMs, now)
             s.nearby -> "Nearby 💞 · within ${s.radiusM} m"
             else -> "updated " + relative(s.myUpdatedAtMs, now)
         }
@@ -86,7 +163,7 @@ object WidgetRenderer {
     private fun relative(ts: Long?, now: Long): String =
         if (ts == null) "—" else DistanceMath.relativeTime(ts, now)
 
-    // ---- bitmaps ------------------------------------------------------------
+    // ---- tactile matte bitmaps ----------------------------------------------
 
     private fun lens(
         context: Context,
@@ -112,24 +189,14 @@ object WidgetRenderer {
         }
         c.drawCircle(size / 2f, size / 2f, r, fill)
 
-        // inner glass highlight
+        // Subtle matte micro-border
         val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
-            strokeWidth = size * 0.055f
-            color = 0x59FFFFFF
-            alpha = if (dimmed) 90 else 150
+            strokeWidth = 1.5f
+            color = if (glowing) 0x66FF375F.toInt() else 0x2EFFFFFF
+            alpha = if (dimmed) 90 else 180
         }
-        c.drawCircle(size / 2f, size / 2f, r - ring.strokeWidth / 2f, ring)
-
-        if (glowing) {
-            val glow = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                style = Paint.Style.STROKE
-                strokeWidth = size * 0.10f
-                color = 0xAAFF7A9C.toInt()
-                maskFilter = android.graphics.BlurMaskFilter(size * 0.08f, android.graphics.BlurMaskFilter.Blur.NORMAL)
-            }
-            c.drawCircle(size / 2f, size / 2f, r + pad / 2f, glow)
-        }
+        c.drawCircle(size / 2f, size / 2f, r, ring)
 
         val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = 0xFFFFFFFF.toInt()
@@ -160,17 +227,14 @@ object WidgetRenderer {
         val rect = RectF(0f, 0f, bmp.width.toFloat(), h.toFloat())
         val pill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             if (nearby) {
-                shader = LinearGradient(
-                    0f, 0f, bmp.width.toFloat(), h.toFloat(),
-                    0xFFFF7A9C.toInt(), 0xFFFF9671.toInt(), Shader.TileMode.CLAMP,
-                )
+                color = 0xFFFF375F.toInt() // Solid Apple Rose
             } else {
-                color = 0xD9FFFFFF.toInt()
+                color = 0xFFF2F4F7.toInt()
             }
         }
         c.drawRoundRect(rect, h / 2f, h / 2f, pill)
 
-        // hairline for the frosted edge
+        // Hairline for tactile matte edge
         val edge = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
             strokeWidth = d

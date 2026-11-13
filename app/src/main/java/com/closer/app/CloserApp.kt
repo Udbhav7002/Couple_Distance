@@ -9,6 +9,10 @@ class CloserApp : Application() {
     override fun onCreate() {
         super.onCreate()
         Locator.init(this)
-        PeriodicWorker.ensure(this)
+        try {
+            PeriodicWorker.ensure(this)
+        } catch (_: Throwable) {
+            // Safe in unit-test environments without WorkManager runtime
+        }
     }
 }

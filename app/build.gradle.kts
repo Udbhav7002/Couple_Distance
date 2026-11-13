@@ -7,7 +7,7 @@ plugins {
 }
 
 // Firebase wiring activates automatically the moment google-services.json lands in app/.
-// Until then the app builds and runs fully on the MockBackend.
+// Until then the app builds and runs fully on the LiveRelayBackend.
 val hasFirebaseConfig = file("google-services.json").exists()
 if (hasFirebaseConfig) {
     apply(plugin = "com.google.gms.google-services")
@@ -34,8 +34,8 @@ android {
         applicationId = "com.closer.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.2.0"
+        versionCode = 3
+        versionName = "1.3.0"
     }
 
     buildTypes {
@@ -56,6 +56,11 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
     }
     packaging {
         resources.excludes += "META-INF/LICENSE*"
@@ -83,14 +88,17 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.10.0")
 
     implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     // Firebase classes are always compiled in; the google-services plugin above only
     // activates with google-services.json. Until then FirebaseApp is never initialized
-    // and the app runs on the MockBackend.
+    // and the app runs on the LiveRelayBackend.
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+    testImplementation("org.robolectric:robolectric:4.14.1")
 }

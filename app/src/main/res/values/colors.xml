@@ -1,11 +1,11 @@
 <resources>
-    <color name="window_bg">#FF0B0D12</color>
-    <!-- Translucent frosted glass for widget (Image reference style) -->
-    <color name="widget_glass_base">#38161A22</color>
-    <color name="widget_glass_stroke">#59FFFFFF</color>
-    <color name="widget_glass_highlight">#38FFFFFF</color>
-    <color name="widget_scrim">#38161A22</color>
-    <color name="widget_scrim_light">#59F0F4F8</color>
-    <color name="bridge_white">#99FFFFFF</color>
+    <color name="window_bg">#FF0D0E11</color>
+    <!-- Matte surface colors for widget -->
+    <color name="widget_glass_base">#E616181D</color>
+    <color name="widget_glass_stroke">#33FFFFFF</color>
+    <color name="widget_glass_highlight">#1FFFFFFF</color>
+    <color name="widget_scrim">#E616181D</color>
+    <color name="widget_scrim_light">#F0ECE8</color>
+    <color name="bridge_white">#4DFFFFFF</color>
     <color name="text_on_widget">#FFFFFFFF</color>
 </resources>

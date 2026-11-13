@@ -28,6 +28,7 @@ class SettingsStore(private val context: Context) {
         val nearAlerts = booleanPreferencesKey("near_alerts")
         val sharingOn = booleanPreferencesKey("sharing_on")
         val onboarded = booleanPreferencesKey("onboarded")
+        val relayUrl = stringPreferencesKey("relay_url")
     }
 
     val myName: Flow<String> = context.settingsDataStore.data.map { it[K.myName] ?: "" }
@@ -44,6 +45,7 @@ class SettingsStore(private val context: Context) {
     val quietFrom: Flow<Int> = context.settingsDataStore.data.map { it[K.quietFrom] ?: 23 }
     val quietTo: Flow<Int> = context.settingsDataStore.data.map { it[K.quietTo] ?: 7 }
     val onboarded: Flow<Boolean> = context.settingsDataStore.data.map { it[K.onboarded] ?: false }
+    val relayUrl: Flow<String> = context.settingsDataStore.data.map { it[K.relayUrl] ?: DEFAULT_RELAY_URL }
 
     suspend fun setProfile(name: String, colorIndex: Int) = context.settingsDataStore.edit {
         it[K.myName] = name
@@ -81,5 +83,13 @@ class SettingsStore(private val context: Context) {
         if (on) it[K.onboarded] = true else it.remove(K.onboarded)
     }
 
+    suspend fun setRelayUrl(url: String) = context.settingsDataStore.edit {
+        it[K.relayUrl] = url
+    }
+
     suspend fun snapshotPairing(): Pairing? = pairing.first()
+
+    companion object {
+        const val DEFAULT_RELAY_URL = "http://10.0.2.2:8765"
+    }
 }

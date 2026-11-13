@@ -18,7 +18,8 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Closer">
+        android:theme="@style/Theme.Closer"
+        android:usesCleartextTraffic="true">
 
         <activity
             android:name=".MainActivity"
@@ -47,6 +48,45 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_spectacles_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.SpectaclesWidgetProvider2x3"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE_OPTIONS" />
+                <action android:name="com.closer.app.WIDGET_REFRESH" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_spectacles_2x3_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.SpectaclesWidgetProvider1x3"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE_OPTIONS" />
+                <action android:name="com.closer.app.WIDGET_REFRESH" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_spectacles_1x3_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.SpectaclesWidgetProvider1x2"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE_OPTIONS" />
+                <action android:name="com.closer.app.WIDGET_REFRESH" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_spectacles_1x2_info" />
         </receiver>
 
         <receiver

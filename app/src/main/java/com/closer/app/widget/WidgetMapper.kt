@@ -7,8 +7,8 @@ import com.closer.app.location.DistanceMath
 object WidgetMapper {
 
     /** CoupleState -> everything the widget needs. */
-    fun fromState(state: CoupleState?, refreshing: Boolean = false): WidgetSnapshot {
-        if (state == null) return WidgetSnapshot(paired = false, refreshing = refreshing)
+    fun fromState(state: CoupleState?, refreshing: Boolean = false, isLive: Boolean = false): WidgetSnapshot {
+        if (state == null) return WidgetSnapshot(paired = false, refreshing = refreshing, isLive = isLive)
 
         val me = state.me
         val partner = state.partner
@@ -31,7 +31,8 @@ object WidgetMapper {
             nearby = distance != null && distance <= state.radiusM,
             radiusM = state.radiusM,
             refreshing = refreshing,
-            paused = !me.sharingOn,
+            paused = !me.sharingOn || (partner != null && !partner.sharingOn),
+            isLive = isLive,
         )
     }
 }

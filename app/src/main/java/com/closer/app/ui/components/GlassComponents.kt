@@ -2,13 +2,6 @@ package com.closer.app.ui.components
 
 import android.content.Context
 import android.content.Intent
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,134 +21,103 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 
 /**
- * Reusable Frosted Glass Design System
+ * Apple-Style Matte Design System & System Tints
  */
 object GlassTheme {
-    val RoseGlow = Color(0xFFFF5B79)
-    val AmberGlow = Color(0xFFFF8E7C)
-    val VioletGlow = Color(0xFF8E7CFF)
+    // Apple Human Interface Guidelines System Tints
+    val AppleRose = Color(0xFFFF375F)
+    val AppleIndigo = Color(0xFF5E5CE6)
+    val AppleTeal = Color(0xFF30D158)
+    val AppleAmber = Color(0xFFFF9F0A)
 
-    val RoseGradient = Brush.horizontalGradient(listOf(RoseGlow, AmberGlow))
-    val VioletGradient = Brush.horizontalGradient(listOf(Color(0xFF6C5CE7), VioletGlow))
+    // Palette aliases for backwards compatibility
+    val RoseGlow = AppleRose
+    val AmberGlow = AppleAmber
+    val VioletGlow = AppleIndigo
+
+    // Velvety dark surfaces and subtle micro-borders
+    val MatteBackground = Color(0xFF0D0E11)
+    val CardBackground = Color(0xFF16181D)
+    val CardBorder = Color(0xFF262933)
+
+    val RoseGradient = Brush.horizontalGradient(
+        listOf(AppleRose, Color(0xFFFF5277))
+    )
+    val VioletGradient = Brush.horizontalGradient(
+        listOf(AppleIndigo, Color(0xFF7D7AFF))
+    )
 
     val CardBrush = Brush.verticalGradient(
         listOf(
-            Color.White.copy(alpha = 0.09f),
-            Color.White.copy(alpha = 0.03f),
+            Color(0xFF16181D),
+            Color(0xFF16181D),
         )
     )
 
     val CardBorderBrush = Brush.verticalGradient(
         listOf(
-            Color.White.copy(alpha = 0.24f),
-            Color.White.copy(alpha = 0.06f),
+            Color(0xFF2E323D),
+            Color(0xFF21242C),
         )
     )
 
     val CardBorderRoseBrush = Brush.verticalGradient(
         listOf(
-            RoseGlow.copy(alpha = 0.5f),
-            Color.White.copy(alpha = 0.12f),
+            AppleRose.copy(alpha = 0.45f),
+            Color(0xFF262933),
         )
     )
 }
 
 /**
- * Background container with subtle ambient floating orbs
+ * Velvety dark matte background container.
+ * Eliminates pulsating radial blur orbs in favor of pure OLED charcoal matte depth.
  */
 @Composable
 fun AmbientGlassBackground(
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "ambient")
-    val pulse = infiniteTransition.animateFloat(
-        initialValue = 0.35f,
-        targetValue = 0.65f,
-        animationSpec = infiniteRepeatable(tween(3500, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "pulseAlpha",
-    )
-
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF0A0D14))
+            .background(GlassTheme.MatteBackground)
     ) {
-        // Soft romantic rose ambient orb in top right
-        Box(
-            modifier = Modifier
-                .size(320.dp)
-                .align(Alignment.TopEnd)
-                .blur(90.dp)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(
-                            Color(0xFFFF5B79).copy(alpha = pulse.value * 0.28f),
-                            Color.Transparent,
-                        )
-                    ),
-                    shape = CircleShape,
-                )
-        )
-
-        // Soft indigo ambient orb in bottom left
-        Box(
-            modifier = Modifier
-                .size(360.dp)
-                .align(Alignment.BottomStart)
-                .blur(110.dp)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(
-                            Color(0xFF6C5CE7).copy(alpha = pulse.value * 0.22f),
-                            Color.Transparent,
-                        )
-                    ),
-                    shape = CircleShape,
-                )
-        )
-
         content()
     }
 }
 
 /**
- * Frosted Glass Card with hairline specular border
+ * Matte container card with subtle 1dp micro-border.
  */
 @Composable
 fun FrostedCard(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(24.dp),
+    shape: Shape = RoundedCornerShape(22.dp),
     borderBrush: Brush = GlassTheme.CardBorderBrush,
     contentPadding: Dp = 20.dp,
     content: @Composable ColumnScope.() -> Unit,
@@ -163,15 +125,15 @@ fun FrostedCard(
     Column(
         modifier = modifier
             .clip(shape)
-            .background(GlassTheme.CardBrush)
-            .border(width = 1.2.dp, brush = borderBrush, shape = shape)
+            .background(GlassTheme.CardBackground)
+            .border(width = 1.dp, brush = borderBrush, shape = shape)
             .padding(contentPadding),
         content = content,
     )
 }
 
 /**
- * Modern glowing action button
+ * Apple-style matte primary action button with tactile micro-haptics.
  */
 @Composable
 fun GlowButton(
@@ -183,22 +145,26 @@ fun GlowButton(
     icon: ImageVector? = null,
     gradient: Brush = GlassTheme.RoseGradient,
 ) {
-    val shape = RoundedCornerShape(18.dp)
+    val haptic = LocalHapticFeedback.current
+    val shape = RoundedCornerShape(16.dp)
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(54.dp)
+            .height(52.dp)
             .clip(shape)
             .background(
                 if (enabled) gradient
-                else Brush.linearGradient(listOf(Color.White.copy(alpha = 0.08f), Color.White.copy(alpha = 0.05f)))
+                else Brush.linearGradient(listOf(Color(0xFF22252D), Color(0xFF1B1D23)))
             )
             .border(
                 width = 1.dp,
-                color = if (enabled) Color.White.copy(alpha = 0.35f) else Color.White.copy(alpha = 0.05f),
+                color = if (enabled) Color.White.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.04f),
                 shape = shape,
             )
-            .clickable(enabled = enabled && !loading, onClick = onClick),
+            .clickable(enabled = enabled && !loading) {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onClick()
+            },
         contentAlignment = Alignment.Center,
     ) {
         if (loading) {
@@ -233,7 +199,7 @@ fun GlowButton(
 }
 
 /**
- * Frosted secondary action button
+ * Apple-style secondary matte button with subtle micro-border and micro-haptics.
  */
 @Composable
 fun FrostedButton(
@@ -243,13 +209,17 @@ fun FrostedButton(
     enabled: Boolean = true,
     icon: ImageVector? = null,
 ) {
-    val shape = RoundedCornerShape(16.dp)
+    val haptic = LocalHapticFeedback.current
+    val shape = RoundedCornerShape(14.dp)
     Box(
         modifier = modifier
             .clip(shape)
-            .background(Color.White.copy(alpha = 0.06f))
-            .border(width = 1.dp, color = Color.White.copy(alpha = 0.18f), shape = shape)
-            .clickable(enabled = enabled, onClick = onClick)
+            .background(Color(0xFF1F222A))
+            .border(width = 1.dp, color = Color(0xFF2E323D), shape = shape)
+            .clickable(enabled = enabled) {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onClick()
+            }
             .padding(horizontal = 20.dp, vertical = 13.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -277,7 +247,7 @@ fun FrostedButton(
 }
 
 /**
- * 6-Tile Styled Code Display
+ * 6-Tile Styled Code Display with matte dark tiles and subtle micro-borders.
  */
 @Composable
 fun StylizedCodeDisplay(
@@ -296,13 +266,13 @@ fun StylizedCodeDisplay(
                 modifier = Modifier
                     .size(width = 44.dp, height = 54.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Color.White.copy(alpha = 0.08f))
+                    .background(Color(0xFF1C1E26))
                     .border(
-                        width = 1.2.dp,
+                        width = 1.dp,
                         brush = Brush.verticalGradient(
                             listOf(
-                                GlassTheme.RoseGlow.copy(alpha = 0.6f),
-                                Color.White.copy(alpha = 0.15f),
+                                GlassTheme.AppleRose.copy(alpha = 0.45f),
+                                Color(0xFF262933),
                             )
                         ),
                         shape = RoundedCornerShape(14.dp),

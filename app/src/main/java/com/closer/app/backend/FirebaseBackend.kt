@@ -1,5 +1,6 @@
 package com.closer.app.backend
 
+import com.closer.app.backend.relay.CodeGenerator
 import com.closer.app.data.CoupleState
 import com.closer.app.data.GeoPoint
 import com.closer.app.data.LocationSample
@@ -42,7 +43,7 @@ class FirebaseBackend : Backend {
     override suspend fun createCouple(me: MemberInit): CoupleState {
         val uid = ensureAuth()
         val coupleRef = db.collection("couples").document()
-        val code = MockBackend.generateCode()
+        val code = CodeGenerator.generate()
         coupleRef.set(
             mapOf(
                 "code" to code,

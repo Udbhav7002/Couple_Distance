@@ -4,7 +4,7 @@
 
 **How far apart are the two of you, right now?**
 
-[**📥 Download Latest APK (v1.2.0)**](https://github.com/Udbhav7002/Couple_Distance/releases/latest/download/Closer-v1.2.0.apk)
+[**📥 Download Latest APK (v1.3.0)**](https://github.com/Udbhav7002/Couple_Distance/releases/latest/download/Closer-v1.3.0.apk)
 
 A couple's proximity app for Android. Two gradient lenses on your home screen — your initials and
 your partner's — joined by a bridge line with the live distance sitting on it like a bead, shaped
@@ -26,8 +26,8 @@ like a pair of spectacles. Frosted, translucent, battery-friendly. When you cros
   with quiet hours presets (Off / Night 23–7 / Late 22–8).
 - **Privacy** — location is visible to *exactly* the two of you (Firestore rules + anonymous
   auth), only the latest point is stored (no history), one-tap pause sharing.
-- **Demo mode** — without a Firebase config the app runs against a simulated partner
-  ("Ava") who drifts around, controllable from Settings → *Demo · move partner*.
+- **Live Relay Backend** — out-of-the-box live partner pairing and real-time SSE sync
+  between two devices using a 6-character connection code, without requiring third-party cloud configuration.
 
 ## Tech
 
@@ -38,7 +38,7 @@ FusedLocationProvider · WorkManager · DataStore · Firebase (Auth + Firestore,
 app/src/main/java/com/closer/app/
   ui/          Onboarding · Home · SettingsSheet · SpectaclesVisual (Compose)
   data/        Models · SettingsStore (DataStore) · SnapshotStore (widget cache)
-  backend/     Backend interface · FirebaseBackend · MockBackend (persisted demo)
+  backend/     Backend interface · FirebaseBackend · LiveRelayBackend (RelayServer / SSE)
   location/    LocationEngine · DistanceMath · LiveModeService
   widget/      SpectaclesWidgetProvider · WidgetRenderer · WidgetMapper · WidgetUpdater
   refresh/     Refresher (single update path) · PeriodicWorker

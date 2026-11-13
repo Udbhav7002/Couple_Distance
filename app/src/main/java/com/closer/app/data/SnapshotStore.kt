@@ -33,6 +33,7 @@ class SnapshotStore(context: Context) {
         put("radiusM", s.radiusM)
         put("refreshing", s.refreshing)
         put("paused", s.paused)
+        put("isLive", s.isLive)
     }
 
     private fun fromJson(j: JSONObject) = WidgetSnapshot(
@@ -48,5 +49,6 @@ class SnapshotStore(context: Context) {
         radiusM = j.optInt("radiusM", 200),
         refreshing = j.optBoolean("refreshing", false),
         paused = j.optBoolean("paused", false),
+        isLive = j.optBoolean("isLive", false),
     )
 }

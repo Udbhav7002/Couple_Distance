@@ -55,7 +55,6 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     val refreshing = MutableStateFlow(false)
     val lastError = MutableStateFlow<String?>(null)
-    val usingMock = MutableStateFlow(!c.usingFirebase)
 
     fun clearError() { lastError.value = null }
 
@@ -157,21 +156,5 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun repairPairing() = viewModelScope.launch {
         c.settings.setPairing(null)
         c.settings.setOnboarded(false)
-    }
-
-    /** In demo mode, connects the simulated partner from the waiting screen */
-    fun connectDemoPartner() = viewModelScope.launch {
-        c.mock?.attachDemoPartner()
-    }
-
-    // ---- debug controls (mock backend only) --------------------------------
-
-    fun debugPlacePartner(distanceM: Double) = viewModelScope.launch {
-        val myPoint = couple.value?.me?.lastLocation?.point ?: return@launch
-        c.mock?.placePartnerNear(myPoint, distanceM)
-    }
-
-    fun debugPartnerSpeed(speedMs: Double) {
-        c.mock?.partnerSpeedMs = speedMs
     }
 }

@@ -35,7 +35,12 @@ object Refresher {
     }
 
     /** Push a known sample (Live mode / passive / worker) and sync everything down. */
-    suspend fun sync(context: Context, pairing: Pairing? = null, sample: LocationSample?) {
+    suspend fun sync(
+        context: Context,
+        pairing: Pairing? = null,
+        sample: LocationSample?,
+        isLive: Boolean? = null,
+    ) {
         val c = Locator.init(context)
         val p = pairing ?: c.settings.snapshotPairing()
         if (p == null) return renderUnpaired(context)
@@ -50,9 +55,9 @@ object Refresher {
         }
 
         val state = fetchState(c, p)
-        seedMockIfNeeded(c, state, sample)
 
-        val snap = WidgetMapper.fromState(state)
+        val liveMode = isLive ?: (c.settings.mode.first() == com.closer.app.data.ShareMode.LIVE)
+        val snap = WidgetMapper.fromState(state, isLive = liveMode)
         c.snapshots.save(snap)
         WidgetUpdater.renderAll(context)
         ProximityChecker.check(c, state, snap)
@@ -63,24 +68,16 @@ object Refresher {
             runCatching { c.backend.observeCouple(p.coupleId, p.uid).first() }.getOrNull()
         }
 
-    /** One-time demo convenience: if the simulated partner is implausibly far, bring them near. */
-    private fun seedMockIfNeeded(c: AppContainer, state: CoupleState?, sample: LocationSample?) {
-        val mock = c.mock ?: return
-        val partnerPoint = state?.partner?.lastLocation?.point ?: return
-        val mine = sample?.point ?: return
-        if (DistanceMath.haversineM(mine, partnerPoint) > 50_000) {
-            mock.seedPartnerNear(mine, 4_200.0)
-        }
-    }
-
     private suspend fun renderUnpaired(context: Context) {
         val c = Locator.init(context)
         val name = c.settings.myName.first()
         val color = c.settings.myColorIndex.first()
+        val liveMode = c.settings.mode.first() == com.closer.app.data.ShareMode.LIVE
         val snap = com.closer.app.data.WidgetSnapshot(
             paired = false,
             myInitial = name.trim().take(1).uppercase().ifEmpty { "?" },
             myColorIndex = color,
+            isLive = liveMode,
         )
         c.snapshots.save(snap)
         WidgetUpdater.renderAll(context)
