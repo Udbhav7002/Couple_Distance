@@ -5,7 +5,9 @@ import com.closer.app.backend.Backend
 import com.closer.app.backend.MemberInit
 import com.closer.app.backend.PairingException
 import com.closer.app.data.CoupleState
+import com.closer.app.data.GeoPoint
 import com.closer.app.data.LocationSample
+import com.closer.app.data.MemberProfile
 import com.closer.app.data.SettingsStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +34,7 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Production-ready network relay implementation of [Backend] using OkHttp and SSE.
+ * Supports both standalone in-process RelayServer (for tests) and global public HTTPS relay (ntfy.sh).
  */
 class LiveRelayBackend(
     private val context: Context? = null,
@@ -56,6 +59,43 @@ class LiveRelayBackend(
             return SettingsStore.DEFAULT_RELAY_URL.trimEnd('/')
         }
 
+    private val isNtfy: Boolean
+        get() = baseUrl.contains("ntfy.sh") || (!baseUrl.contains("127.0.0.1") && !baseUrl.contains("localhost"))
+
+    private fun ntfyTopic(code: String): String = "closer_v1_" + code.trim().uppercase()
+
+    private fun postNtfy(topic: String, payload: JSONObject) {
+        val url = "$baseUrl/$topic"
+        val request = Request.Builder()
+            .url(url)
+            .post(payload.toString().toRequestBody(TEXT_MEDIA_TYPE))
+            .build()
+        okHttpClient.newCall(request).execute().use { resp ->
+            if (!resp.isSuccessful) {
+                throw IOException("Network error: ${resp.code} on $topic")
+            }
+        }
+    }
+
+    private fun pollNtfyMessages(topic: String): List<JSONObject> {
+        val url = "$baseUrl/$topic/json?poll=1&since=all"
+        val request = Request.Builder().url(url).get().build()
+        val list = mutableListOf<JSONObject>()
+        okHttpClient.newCall(request).execute().use { resp ->
+            if (!resp.isSuccessful) return emptyList()
+            val source = resp.body?.source() ?: return emptyList()
+            while (true) {
+                val line = source.readUtf8Line() ?: break
+                val ntfyObj = runCatching { JSONObject(line) }.getOrNull() ?: continue
+                if (ntfyObj.optString("event") == "message") {
+                    val raw = ntfyObj.optString("message")
+                    runCatching { JSONObject(raw) }.getOrNull()?.let { list.add(it) }
+                }
+            }
+        }
+        return list
+    }
+
     init {
         if (context != null) {
             val settings = SettingsStore(context)
@@ -77,6 +117,13 @@ class LiveRelayBackend(
             if (!existing.isNullOrEmpty()) {
                 cachedUid = existing
                 return@withContext existing
+            }
+
+            if (isNtfy) {
+                val generated = "user-" + UUID.randomUUID().toString().take(12)
+                prefs?.edit()?.putString("uid", generated)?.apply()
+                cachedUid = generated
+                return@withContext generated
             }
 
             val generated = try {
@@ -104,6 +151,31 @@ class LiveRelayBackend(
 
     override suspend fun createCouple(me: MemberInit): CoupleState = withContext(Dispatchers.IO) {
         val uid = ensureAuth()
+
+        if (isNtfy) {
+            val code = CodeGenerator.generate()
+            val coupleId = "c_$code"
+            val topic = ntfyTopic(code)
+            val body = JSONObject().apply {
+                put("action", "create")
+                put("coupleId", coupleId)
+                put("code", code)
+                put("radiusM", 200)
+                put("uid", uid)
+                put("name", me.name)
+                put("colorIndex", me.colorIndex)
+                put("createdAt", System.currentTimeMillis())
+            }
+            postNtfy(topic, body)
+            return@withContext CoupleState(
+                coupleId = coupleId,
+                code = code,
+                radiusM = 200,
+                me = MemberProfile(uid = uid, name = me.name, colorIndex = me.colorIndex),
+                partner = null
+            )
+        }
+
         val body = JSONObject().apply {
             put("uid", uid)
             put("name", me.name)
@@ -125,8 +197,58 @@ class LiveRelayBackend(
 
     override suspend fun joinCouple(code: String, me: MemberInit): CoupleState = withContext(Dispatchers.IO) {
         val uid = ensureAuth()
+        val cleanCode = code.trim().uppercase()
+
+        if (isNtfy) {
+            val topic = ntfyTopic(cleanCode)
+            var messages = emptyList<JSONObject>()
+            for (attempt in 1..6) {
+                messages = pollNtfyMessages(topic)
+                if (messages.any { it.optString("action") == "create" }) break
+                delay(400)
+            }
+            val createMsg = messages.firstOrNull { it.optString("action") == "create" }
+                ?: throw PairingException("No couple found for code $cleanCode")
+
+            val createdAt = createMsg.optLong("createdAt", 0L)
+            if (createdAt > 0 && System.currentTimeMillis() - createdAt > 24 * 3600 * 1000L) {
+                throw PairingException("This pairing code has expired. Ask your partner to create a new couple.")
+            }
+
+            val creatorUid = createMsg.getString("uid")
+            val creatorName = createMsg.getString("name")
+            val creatorColor = createMsg.getInt("colorIndex")
+            val radiusM = createMsg.optInt("radiusM", 200)
+
+            val joinMsgs = messages.filter { it.optString("action") == "join" }
+            val otherJoiner = joinMsgs.firstOrNull { it.optString("uid") != creatorUid && it.optString("uid") != uid }
+            if (otherJoiner != null) {
+                throw PairingException("That couple already has two members")
+            }
+
+            val coupleId = "c_$cleanCode"
+            val joinBody = JSONObject().apply {
+                put("action", "join")
+                put("coupleId", coupleId)
+                put("code", cleanCode)
+                put("uid", uid)
+                put("name", me.name)
+                put("colorIndex", me.colorIndex)
+            }
+            postNtfy(topic, joinBody)
+
+            val partnerProfile = MemberProfile(uid = creatorUid, name = creatorName, colorIndex = creatorColor)
+            return@withContext CoupleState(
+                coupleId = coupleId,
+                code = cleanCode,
+                radiusM = radiusM,
+                me = MemberProfile(uid = uid, name = me.name, colorIndex = me.colorIndex),
+                partner = partnerProfile
+            )
+        }
+
         val body = JSONObject().apply {
-            put("code", code.trim().uppercase())
+            put("code", cleanCode)
             put("uid", uid)
             put("name", me.name)
             put("colorIndex", me.colorIndex)
@@ -148,7 +270,144 @@ class LiveRelayBackend(
 
     @OptIn(kotlinx.coroutines.InternalCoroutinesApi::class)
     override fun observeCouple(coupleId: String, myUid: String): Flow<CoupleState?> = flow {
-        // Step 1: Initial state fetch via REST snapshot
+        if (isNtfy) {
+            val cleanCode = coupleId.removePrefix("c_")
+            val topic = ntfyTopic(cleanCode)
+
+            var codeStr = cleanCode
+            var radius = 200
+            var creatorProfile: MemberProfile? = null
+            var joinerProfile: MemberProfile? = null
+
+            fun buildState(): CoupleState? {
+                val creator = creatorProfile ?: return null
+                val me = if (myUid == creator.uid) creator else (joinerProfile ?: return null)
+                val partner = if (myUid == creator.uid) joinerProfile else creator
+                return CoupleState(
+                    coupleId = coupleId,
+                    code = codeStr,
+                    radiusM = radius,
+                    me = me,
+                    partner = partner
+                )
+            }
+
+            fun applyMessage(j: JSONObject) {
+                when (j.optString("action")) {
+                    "create" -> {
+                        radius = j.optInt("radiusM", radius)
+                        codeStr = j.optString("code", codeStr)
+                        val u = j.optString("uid")
+                        creatorProfile = (creatorProfile ?: MemberProfile(u, j.optString("name"), j.optInt("colorIndex"))).copy(
+                            name = j.optString("name", creatorProfile?.name ?: ""),
+                            colorIndex = j.optInt("colorIndex", creatorProfile?.colorIndex ?: 0)
+                        )
+                    }
+                    "join" -> {
+                        val u = j.optString("uid")
+                        joinerProfile = (joinerProfile ?: MemberProfile(u, j.optString("name"), j.optInt("colorIndex"))).copy(
+                            name = j.optString("name", joinerProfile?.name ?: ""),
+                            colorIndex = j.optInt("colorIndex", joinerProfile?.colorIndex ?: 0)
+                        )
+                    }
+                    "loc" -> {
+                        val u = j.optString("uid")
+                        val sample = RelayJson.locationSampleFromJson(j)
+                        if (u == creatorProfile?.uid) {
+                            creatorProfile = creatorProfile?.copy(lastLocation = sample)
+                        } else {
+                            joinerProfile = (joinerProfile ?: MemberProfile(u, "", 0)).copy(lastLocation = sample)
+                        }
+                    }
+                    "sharing" -> {
+                        val u = j.optString("uid")
+                        val on = j.optBoolean("sharingOn", true)
+                        if (u == creatorProfile?.uid) {
+                            creatorProfile = creatorProfile?.copy(sharingOn = on)
+                        } else {
+                            joinerProfile = (joinerProfile ?: MemberProfile(u, "", 0)).copy(sharingOn = on)
+                        }
+                    }
+                    "radius" -> {
+                        radius = j.optInt("radiusM", radius)
+                    }
+                    "profile" -> {
+                        val u = j.optString("uid")
+                        val name = j.optString("name")
+                        val color = j.optInt("colorIndex")
+                        if (u == creatorProfile?.uid) {
+                            creatorProfile = creatorProfile?.copy(name = name, colorIndex = color)
+                        } else {
+                            joinerProfile = (joinerProfile ?: MemberProfile(u, "", 0)).copy(name = name, colorIndex = color)
+                        }
+                    }
+                }
+            }
+
+            runCatching {
+                val past = pollNtfyMessages(topic)
+                for (msg in past) applyMessage(msg)
+            }
+            buildState()?.let { emit(it) }
+
+            while (currentCoroutineContext().isActive) {
+                var activeCall: okhttp3.Call? = null
+                try {
+                    val url = "$baseUrl/$topic/sse?since=all"
+                    val request = Request.Builder()
+                        .url(url)
+                        .header("Accept", "text/event-stream")
+                        .build()
+                    val call = okHttpClient.newCall(request)
+                    activeCall = call
+                    var activeResponse: okhttp3.Response? = null
+                    val cancelHandle = currentCoroutineContext().job.invokeOnCompletion(onCancelling = true) {
+                        try { call.cancel() } catch (_: Throwable) {}
+                        try { activeResponse?.close() } catch (_: Throwable) {}
+                    }
+
+                    try {
+                        call.execute().use { resp ->
+                            activeResponse = resp
+                            if (!resp.isSuccessful) {
+                                delay(1000)
+                                return@use
+                            }
+                            val source = resp.body?.source() ?: return@use
+                            while (currentCoroutineContext().isActive) {
+                                val line = source.readUtf8Line() ?: break
+                                if (line.startsWith("data:")) {
+                                    val jsonStr = line.removePrefix("data:").trim()
+                                    if (jsonStr.isNotEmpty()) {
+                                        val ntfyObj = runCatching { JSONObject(jsonStr) }.getOrNull()
+                                        if (ntfyObj != null && ntfyObj.optString("event") == "message") {
+                                            val raw = ntfyObj.optString("message")
+                                            val payloadObj = runCatching { JSONObject(raw) }.getOrNull()
+                                            if (payloadObj != null) {
+                                                applyMessage(payloadObj)
+                                                buildState()?.let { emit(it) }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } finally {
+                        activeResponse = null
+                        cancelHandle.dispose()
+                    }
+                } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) throw e
+                    if (!currentCoroutineContext().isActive) break
+                    delay(1000)
+                } finally {
+                    try { activeCall?.cancel() } catch (_: Throwable) {}
+                }
+            }
+            return@flow
+        }
+
+        // Step 1: Initial state fetch via REST snapshot (for RelayServer)
         runCatching {
             fetchCoupleSnapshot(coupleId, myUid)
         }.getOrNull()?.let { emit(it) }
@@ -218,6 +477,17 @@ class LiveRelayBackend(
     }
 
     override suspend fun pushLocation(coupleId: String, uid: String, sample: LocationSample) = withContext(Dispatchers.IO) {
+        if (isNtfy) {
+            val cleanCode = coupleId.removePrefix("c_")
+            val topic = ntfyTopic(cleanCode)
+            val body = RelayJson.locationSampleToJson(sample).apply {
+                put("action", "loc")
+                put("uid", uid)
+            }
+            postNtfy(topic, body)
+            return@withContext
+        }
+
         val body = RelayJson.locationSampleToJson(sample).apply {
             put("uid", uid)
         }
@@ -234,6 +504,18 @@ class LiveRelayBackend(
     }
 
     override suspend fun setSharing(coupleId: String, uid: String, on: Boolean) = withContext(Dispatchers.IO) {
+        if (isNtfy) {
+            val cleanCode = coupleId.removePrefix("c_")
+            val topic = ntfyTopic(cleanCode)
+            val body = JSONObject().apply {
+                put("action", "sharing")
+                put("uid", uid)
+                put("sharingOn", on)
+            }
+            postNtfy(topic, body)
+            return@withContext
+        }
+
         val body = JSONObject().apply {
             put("uid", uid)
             put("sharingOn", on)
@@ -251,6 +533,17 @@ class LiveRelayBackend(
     }
 
     override suspend fun setRadius(coupleId: String, radiusM: Int) = withContext(Dispatchers.IO) {
+        if (isNtfy) {
+            val cleanCode = coupleId.removePrefix("c_")
+            val topic = ntfyTopic(cleanCode)
+            val body = JSONObject().apply {
+                put("action", "radius")
+                put("radiusM", radiusM)
+            }
+            postNtfy(topic, body)
+            return@withContext
+        }
+
         val body = JSONObject().apply {
             put("radiusM", radiusM)
         }
@@ -267,6 +560,19 @@ class LiveRelayBackend(
     }
 
     override suspend fun updateMe(coupleId: String, uid: String, name: String, colorIndex: Int) = withContext(Dispatchers.IO) {
+        if (isNtfy) {
+            val cleanCode = coupleId.removePrefix("c_")
+            val topic = ntfyTopic(cleanCode)
+            val body = JSONObject().apply {
+                put("action", "profile")
+                put("uid", uid)
+                put("name", name)
+                put("colorIndex", colorIndex)
+            }
+            postNtfy(topic, body)
+            return@withContext
+        }
+
         val body = JSONObject().apply {
             put("uid", uid)
             put("name", name)
@@ -286,5 +592,6 @@ class LiveRelayBackend(
 
     companion object {
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
+        private val TEXT_MEDIA_TYPE = "text/plain; charset=utf-8".toMediaType()
     }
 }

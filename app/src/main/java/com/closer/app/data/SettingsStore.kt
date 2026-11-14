@@ -90,6 +90,6 @@ class SettingsStore(private val context: Context) {
     suspend fun snapshotPairing(): Pairing? = pairing.first()
 
     companion object {
-        const val DEFAULT_RELAY_URL = "http://10.0.2.2:8765"
+        const val DEFAULT_RELAY_URL = "https://ntfy.sh"
     }
 }

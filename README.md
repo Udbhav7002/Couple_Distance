@@ -4,7 +4,7 @@
 
 **How far apart are the two of you, right now?**
 
-[**📥 Download Latest APK (v1.3.0)**](https://github.com/Udbhav7002/Couple_Distance/releases/latest/download/Closer-v1.3.0.apk)
+[**📥 Download Latest APK (v1.3.1)**](https://github.com/Udbhav7002/Couple_Distance/releases/latest/download/Closer-v1.3.1.apk)
 
 A couple's proximity app for Android. Two gradient lenses on your home screen — your initials and
 your partner's — joined by a bridge line with the live distance sitting on it like a bead, shaped
@@ -15,8 +15,8 @@ like a pair of spectacles. Frosted, translucent, battery-friendly. When you cros
 
 ## Features
 
-- **The spectacles widget** (4×2 translucent, tap anywhere = refresh both of you; footer opens the app)
-  - States: normal · **Nearby 💞** (rose glow) · refreshing · stale · paused
+- **Multi-size spectacles widgets** (selectable sizes: 1×2, 2×3, 1×3, and 4×3 with translucent glass styling)
+  - States: **Live ⚡** · **Connected** · **Nearby 💞** (rose glow) · **Paused** · **Last seen**
   - Distance formatting: `87 cm` under a metre · `420 m` · `3.4 km` · `26 km`
 - **Eco mode (default)** — no persistent service: refresh on tap, on app open, every 15 min
   (WorkManager), plus passive location hints. ~zero battery.
